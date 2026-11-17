@@ -6,6 +6,7 @@ import structlog
 
 from app.config import settings
 from app.core.redis_client import get_redis, close_redis
+from app.core.scheduler import start_scheduler, stop_scheduler
 from app.api.v1.router import api_router
 
 logger = structlog.get_logger()
@@ -18,8 +19,13 @@ async def lifespan(app: FastAPI):
         await get_redis()
     except Exception as e:
         logger.warning("Redis not available at startup", error=str(e))
+    try:
+        start_scheduler()
+    except Exception as e:
+        logger.warning("Scheduler failed to start", error=str(e))
     logger.info("JobPilot AI backend ready.")
     yield
+    stop_scheduler()
     await close_redis()
     logger.info("JobPilot AI backend stopped.")
 

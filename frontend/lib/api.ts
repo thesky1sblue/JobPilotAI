@@ -35,9 +35,9 @@ export interface Job {
   classification: "strong" | "good" | "review" | "low" | null;
 }
 
-export interface JobDetail extends Job {
+export interface JobDetail extends Omit<Job, "company"> {
   description: string;
-  company: { id: string; name: string; careers_url: string };
+  company: { id: string; name: string; careers_url: string } | string;
   required_skills: string[];
   preferred_skills: string[];
   education_requirement: string;
