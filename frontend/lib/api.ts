@@ -134,3 +134,21 @@ export const batchPrepareApplications = (minScore: number = 80.0, limit: number 
 
 export const batchSubmitApplications = () =>
   api.post<{ status: string; submitted_count: number; message: string }>("/applications/batch-submit").then(r => r.data);
+
+export interface SubmissionReceipt {
+  application_id: string;
+  submission_id: string;
+  job_title: string;
+  company_name: string;
+  company_domain: string;
+  recipient_name: string;
+  recipient_email: string;
+  submitted_at: string;
+  email_subject: string;
+  email_body: string;
+  resume_url: string;
+  cover_letter_url: string | null;
+}
+
+export const getSubmissionReceipts = () =>
+  api.get<SubmissionReceipt[]>("/applications/receipts").then(r => r.data);

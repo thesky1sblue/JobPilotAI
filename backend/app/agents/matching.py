@@ -18,7 +18,9 @@ CLASSIFICATIONS = {
     (0, 55): "low",
 }
 
-def classify(score: float) -> str:
+def classify(score: float, is_eligible: bool = True) -> str:
+    if not is_eligible:
+        return "low"
     if score >= 80:
         return "strong"
     if score >= 70:
@@ -121,16 +123,31 @@ class MatchingAgent(BaseAgent):
         else:
             experience_score = 60.0
 
-        # Location compatibility
-        preferred_locations = [l.lower() for l in (preferences.get("preferred_locations") or ["bangalore", "remote", "chennai", "hyderabad", "pune", "kolkata"])]
+        # Location compatibility (India-focused)
         job_location = (job.get("location") or "").lower()
-        
-        if not job_location or "remote" in job_location or "anywhere" in job_location or "india" in job_location:
+        india_cities = [
+            "india", "bangalore", "bengaluru", "chennai", "hyderabad", "pune", "mumbai",
+            "kolkata", "delhi", "ncr", "gurgaon", "gurugram", "noida", "ahmedabad",
+            "jaipur", "indore", "kochi", "coimbatore", "chandigarh"
+        ]
+        foreign_regions = [
+            "united states", "usa", "uk", "london", "dublin", "ireland", "singapore",
+            "germany", "berlin", "canada", "toronto", "chicago", "san francisco", "austin",
+            "new york", "seattle", "australia", "sydney", "tokyo", "japan", "brazil", "mexico",
+            "poland", "sweden", "france", "paris", "netherlands", "amsterdam", "spain", "us-remote"
+        ]
+
+        is_in_india = any(c in job_location for c in india_cities)
+        is_foreign = any(f in job_location for f in foreign_regions) and not is_in_india
+
+        if is_foreign:
+            location_score = 0.0
+            is_eligible = False
+            eligibility_notes = f"Location '{job.get('location')}' is outside India."
+        elif is_in_india or ("remote" in job_location and not is_foreign) or not job_location:
             location_score = 100.0
-        elif any(pref in job_location for pref in preferred_locations):
-            location_score = 95.0
         else:
-            location_score = 60.0  # Still considered since candidate is willing to relocate in India
+            location_score = 50.0
 
         # Compensation compatibility (no min salary restriction)
         salary_score = 85.0
@@ -149,7 +166,7 @@ class MatchingAgent(BaseAgent):
         )
 
         overall = round(min(100.0, max(0.0, overall)), 1)
-        classification = classify(overall)
+        classification = classify(overall, is_eligible)
 
         lines = [f"Overall compatibility: {overall:.1f}% ({classification.upper()} MATCH)"]
         if matched:

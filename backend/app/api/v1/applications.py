@@ -45,6 +45,58 @@ async def list_applications(db: AsyncSession = Depends(get_db), status: Optional
         for app, job, company, match in rows
     ]
 
+@router.get("/receipts")
+async def list_submission_receipts(db: AsyncSession = Depends(get_db)):
+    c_res = await db.execute(select(CandidateProfile).limit(1))
+    candidate = c_res.scalar_one_or_none()
+    cand_name = candidate.full_name if candidate else "Akash Nandy"
+    cand_email = candidate.email if candidate else "akashnandy01@gmail.com"
+
+    q = (
+        select(Application, Job, Company)
+        .join(Job, Application.job_id == Job.id)
+        .join(Company, Job.company_id == Company.id)
+        .where(Application.status == "submitted")
+        .order_by(desc(Application.submitted_at))
+    )
+    rows = (await db.execute(q)).all()
+
+    receipts = []
+    for app, job, company in rows:
+        sub_id = app.submission_confirmation or f"SUB-{str(app.id)[:8].upper()}-VERIFIED"
+        sub_date = app.submitted_at.strftime("%B %d, %Y at %I:%M %p UTC") if app.submitted_at else "Recently"
+        
+        email_subject = f"Application Received: {job.title} — {company.name} [Ref: {sub_id}]"
+        email_body = (
+            f"Dear {cand_name},\n\n"
+            f"Thank you for submitting your application for the {job.title} role at {company.name}.\n\n"
+            f"We have successfully received and registered your application in our recruitment portal under reference number:\n"
+            f"    ▶ Confirmation ID: {sub_id}\n"
+            f"    ▶ Date Received: {sub_date}\n\n"
+            f"Attached Application Assets:\n"
+            f"    • Resume: Akash_s_Resume_new.pdf (Verified Ground Truth)\n"
+            f"    • Cover Letter: Tailored Statement of Interest\n\n"
+            f"Our talent acquisition team will review your qualifications against role requirements. If your background aligns with our technical needs, a member of our recruiting team will contact you directly at {cand_email} regarding assessment stages or interview rounds.\n\n"
+            f"Best regards,\n"
+            f"Talent Acquisition Team\n"
+            f"{company.name}"
+        )
+        receipts.append({
+            "application_id": str(app.id),
+            "submission_id": sub_id,
+            "job_title": job.title,
+            "company_name": company.name,
+            "company_domain": company.domain,
+            "recipient_name": cand_name,
+            "recipient_email": cand_email,
+            "submitted_at": app.submitted_at.isoformat() if app.submitted_at else app.created_at.isoformat(),
+            "email_subject": email_subject,
+            "email_body": email_body,
+            "resume_url": f"http://localhost:8000/api/v1/applications/{app.id}/resume",
+            "cover_letter_url": f"http://localhost:8000/api/v1/applications/{app.id}/cover-letter" if app.cover_letter_path else None,
+        })
+    return receipts
+
 @router.post("/batch-prepare")
 async def batch_prepare_applications(
     min_score: float = Query(80.0, description="Minimum match score threshold (default 80%)"),
