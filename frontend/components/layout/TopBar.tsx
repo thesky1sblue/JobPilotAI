@@ -10,16 +10,21 @@ interface TopBarProps {
 
 export function TopBar({ title, subtitle }: TopBarProps) {
   const [running, setRunning] = useState(false);
-  const [result, setResult] = useState<string | null>(null);
+  const [result, setResult] = useState<{ text: string; isError: boolean } | null>(null);
 
   const handleDiscover = async () => {
     setRunning(true);
     setResult(null);
     try {
       const r = await triggerDiscovery();
-      setResult(`+${r.new_jobs} jobs found`);
-    } catch {
-      setResult("Discovery failed");
+      if (r.new_jobs > 0) {
+        setResult({ text: `+${r.new_jobs} new jobs discovered`, isError: false });
+      } else {
+        setResult({ text: `Scanned ${r.companies_scanned} companies (up to date)`, isError: false });
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Discovery request failed";
+      setResult({ text: message, isError: true });
     } finally {
       setRunning(false);
     }
@@ -32,7 +37,11 @@ export function TopBar({ title, subtitle }: TopBarProps) {
         {subtitle && <p className="text-xs text-text-muted mt-0.5">{subtitle}</p>}
       </div>
       <div className="flex items-center gap-3">
-        {result && <span className="text-xs font-mono text-success">{result}</span>}
+        {result && (
+          <span className={`text-xs font-mono ${result.isError ? "text-danger" : "text-success"}`}>
+            {result.text}
+          </span>
+        )}
         <button
           onClick={handleDiscover}
           disabled={running}
