@@ -1,5 +1,4 @@
 """Provider-independent LLM gateway."""
-import os
 import asyncio
 from typing import Optional
 from app.config import settings
@@ -12,10 +11,6 @@ class LLMGateway:
         self.provider = settings.llm_provider
 
     async def generate(self, prompt: str, system: Optional[str] = None) -> str:
-        # In test mode or when testing env variable is set, return mock response instantly
-        if os.getenv("TESTING") == "1" or settings.app_env == "test":
-            return self._mock_response(prompt)
-
         if self.provider == "gemini":
             return await self._gemini(prompt, system)
         elif self.provider == "anthropic":
@@ -28,11 +23,10 @@ class LLMGateway:
         if not settings.gemini_api_key or settings.gemini_api_key == "your_gemini_api_key_here":
             logger.warning("gemini.api_key_missing_or_placeholder")
             return self._mock_response(prompt)
-        genai.configure(api_key=settings.gemini_api_key)
-        model = genai.GenerativeModel("gemini-1.5-pro")
+        genai.configure(api_key=settings.gemini_api_key, transport="rest")
+        model = genai.GenerativeModel("gemini-3.8-flash")
         full_prompt = f"{system}\n\n{prompt}" if system else prompt
         try:
-            # 8-second timeout for async generation call
             response = await asyncio.wait_for(model.generate_content_async(full_prompt), timeout=8.0)
             return response.text
         except Exception as e:
