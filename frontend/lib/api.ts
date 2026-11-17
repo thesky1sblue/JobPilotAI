@@ -68,6 +68,10 @@ export interface Company {
 export interface Application {
   id: string;
   job_id: string;
+  job_title?: string;
+  company_name?: string;
+  match_score?: number | null;
+  portal_url?: string | null;
   status: string;
   is_ready: boolean;
   submitted_at: string | null;
@@ -102,7 +106,8 @@ export interface Preferences {
 export const getOverviewStats = () => api.get<OverviewStats>("/jobs/stats/overview").then(r => r.data);
 export const getJobs = (params?: Record<string, unknown>) => api.get<{ total: number; jobs: Job[] }>("/jobs/", { params }).then(r => r.data);
 export const getJob = (id: string) => api.get<JobDetail>(`/jobs/${id}`).then(r => r.data);
-export const triggerDiscovery = () => api.post<{ message: string; new_jobs: number }>("/jobs/discover").then(r => r.data);
+export const triggerDiscovery = () =>
+  api.post<{ message?: string; new_jobs: number; companies_scanned?: number; errors?: string[] }>("/jobs/discover").then(r => r.data);
 export const getCompanies = () => api.get<Company[]>("/companies/").then(r => r.data);
 export const seedCompanies = () => api.post<{ message: string; seeded: number }>("/companies/seed").then(r => r.data);
 export const getProfile = () => api.get<CandidateProfile>("/candidate/profile").then(r => r.data);
@@ -116,3 +121,16 @@ export const uploadResume = (file: File) => {
   form.append("file", file);
   return api.post<{ message: string; version: number }>("/candidate/upload-resume", form, { headers: { "Content-Type": "multipart/form-data" } }).then(r => r.data);
 };
+
+export const prepareApplication = (jobId: string) =>
+  api.post<{ status: string; application_id: string; message: string }>(`/applications/prepare/${jobId}`).then(r => r.data);
+
+export const batchPrepareApplications = (minScore: number = 80.0, limit: number = 25) =>
+  api.post<{ status: string; prepared_count: number; applications: Array<{ application_id: string; job_title: string; company: string; match_score: number }> }>(
+    "/applications/batch-prepare",
+    null,
+    { params: { min_score: minScore, limit } }
+  ).then(r => r.data);
+
+export const batchSubmitApplications = () =>
+  api.post<{ status: string; submitted_count: number; message: string }>("/applications/batch-submit").then(r => r.data);

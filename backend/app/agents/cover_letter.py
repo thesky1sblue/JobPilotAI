@@ -88,3 +88,6 @@ class CoverLetterAgent(BaseAgent):
             "pdf_path": pdf_path,
             "filename": cl_filename,
         }
+
+
+cover_letter_agent = CoverLetterAgent()

@@ -125,3 +125,6 @@ class ResumeIntelligenceAgent(BaseAgent):
             "pdf_path": pdf_path,
             "resume_filename": resume_filename,
         }
+
+
+resume_intelligence_agent = ResumeIntelligenceAgent()

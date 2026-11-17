@@ -20,7 +20,7 @@ export function TopBar({ title, subtitle }: TopBarProps) {
       if (r.new_jobs > 0) {
         setResult({ text: `+${r.new_jobs} new jobs discovered`, isError: false });
       } else {
-        setResult({ text: `Scanned ${r.companies_scanned} companies (up to date)`, isError: false });
+        setResult({ text: `Scanned ${r.companies_scanned ?? "all"} companies (up to date)`, isError: false });
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Discovery request failed";
