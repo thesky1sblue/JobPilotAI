@@ -97,6 +97,7 @@ export default function QueuePage() {
                     <th className="text-left p-3 text-text-muted font-medium text-[10px] uppercase">Opportunity</th>
                     <th className="text-left p-3 text-text-muted font-medium text-[10px] uppercase">Company</th>
                     <th className="text-left p-3 text-text-muted font-medium text-[10px] uppercase">Match</th>
+                    <th className="text-left p-3 text-text-muted font-medium text-[10px] uppercase">Documents</th>
                     <th className="text-left p-3 text-text-muted font-medium text-[10px] uppercase">Prepared</th>
                     <th className="text-right p-3 text-text-muted font-medium text-[10px] uppercase">Decision</th>
                   </tr>
@@ -117,6 +118,28 @@ export default function QueuePage() {
                         ) : (
                           <span className="text-text-muted">—</span>
                         )}
+                      </td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-1.5">
+                          <a
+                            href={`http://localhost:8000/api/v1/applications/${a.id}/resume`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2 py-0.5 bg-surface border border-border hover:border-accent/50 text-[10px] text-text rounded"
+                            title="View Attached Resume PDF"
+                          >
+                            Resume
+                          </a>
+                          <a
+                            href={`http://localhost:8000/api/v1/applications/${a.id}/cover-letter`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-2 py-0.5 bg-surface border border-border hover:border-accent/50 text-[10px] text-accent rounded"
+                            title="View Generated Cover Letter PDF"
+                          >
+                            Cover Letter
+                          </a>
+                        </div>
                       </td>
                       <td className="p-3 font-mono text-text-muted">{formatDate(a.created_at)}</td>
                       <td className="p-3 text-right">
@@ -169,6 +192,7 @@ export default function QueuePage() {
                     <th className="text-left p-3 text-text-muted font-medium text-[10px] uppercase">Company</th>
                     <th className="text-left p-3 text-text-muted font-medium text-[10px] uppercase">Status</th>
                     <th className="text-left p-3 text-text-muted font-medium text-[10px] uppercase">Score</th>
+                    <th className="text-left p-3 text-text-muted font-medium text-[10px] uppercase">Documents</th>
                     <th className="text-left p-3 text-text-muted font-medium text-[10px] uppercase">Submitted At</th>
                     <th className="text-left p-3 text-text-muted font-medium text-[10px] uppercase">Created</th>
                   </tr>
@@ -188,6 +212,28 @@ export default function QueuePage() {
                       </td>
                       <td className="p-3 font-mono">
                         {a.match_score != null ? `${a.match_score.toFixed(0)}%` : "—"}
+                      </td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-1.5">
+                          <a
+                            href={`http://localhost:8000/api/v1/applications/${a.id}/resume`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-1.5 py-0.5 bg-surface border border-border hover:border-accent/50 text-[10px] text-text rounded"
+                            title="View Attached Resume"
+                          >
+                            Resume
+                          </a>
+                          <a
+                            href={`http://localhost:8000/api/v1/applications/${a.id}/cover-letter`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-1.5 py-0.5 bg-surface border border-border hover:border-accent/50 text-[10px] text-accent rounded"
+                            title="View Generated Cover Letter"
+                          >
+                            Cover Letter
+                          </a>
+                        </div>
                       </td>
                       <td className="p-3 font-mono text-text-muted">{formatDate(a.submitted_at)}</td>
                       <td className="p-3 font-mono text-text-muted">{formatDate(a.created_at)}</td>

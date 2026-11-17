@@ -1,7 +1,9 @@
 import uuid
+import os
 from typing import Optional, List
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from app.core.database import get_db
@@ -306,9 +308,18 @@ async def prepare_single_application(job_id: str, db: AsyncSession = Depends(get
         "message": f"Successfully prepared application for {job.title} at {company.name}.",
     }
 
+def parse_uuid(val: str) -> uuid.UUID:
+    if isinstance(val, uuid.UUID):
+        return val
+    try:
+        return uuid.UUID(str(val))
+    except ValueError:
+        return uuid.UUID(hex=str(val))
+
 @router.get("/{application_id}")
 async def get_application(application_id: str, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Application).where(Application.id == application_id))
+    u_id = parse_uuid(application_id)
+    result = await db.execute(select(Application).where(Application.id == u_id))
     app = result.scalar_one_or_none()
     if not app:
         raise HTTPException(status_code=404, detail="Application not found")
@@ -330,7 +341,8 @@ async def get_application(application_id: str, db: AsyncSession = Depends(get_db
 
 @router.post("/{application_id}/approve")
 async def approve_application(application_id: str, notes: Optional[str] = None, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Application).where(Application.id == application_id))
+    u_id = parse_uuid(application_id)
+    result = await db.execute(select(Application).where(Application.id == u_id))
     app = result.scalar_one_or_none()
     if not app:
         raise HTTPException(status_code=404, detail="Application not found")
@@ -344,7 +356,8 @@ async def approve_application(application_id: str, notes: Optional[str] = None, 
 
 @router.post("/{application_id}/reject")
 async def reject_application(application_id: str, notes: Optional[str] = None, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Application).where(Application.id == application_id))
+    u_id = parse_uuid(application_id)
+    result = await db.execute(select(Application).where(Application.id == u_id))
     app = result.scalar_one_or_none()
     if not app:
         raise HTTPException(status_code=404, detail="Application not found")
@@ -354,3 +367,51 @@ async def reject_application(application_id: str, notes: Optional[str] = None, d
     db.add(ApplicationEvent(application_id=app.id, event_type="rejected", old_status=old_status, new_status="rejected", notes=notes))
     await db.commit()
     return {"status": "rejected", "application_id": application_id}
+
+@router.get("/{application_id}/cover-letter")
+async def download_cover_letter(application_id: str, db: AsyncSession = Depends(get_db)):
+    u_id = parse_uuid(application_id)
+    result = await db.execute(select(Application).where(Application.id == u_id))
+    app = result.scalar_one_or_none()
+    if not app or not app.cover_letter_path:
+        raise HTTPException(status_code=404, detail="Cover letter not found")
+    full_path = app.cover_letter_path
+    if not os.path.isabs(full_path):
+        full_path = os.path.join(os.getcwd(), full_path)
+    if not os.path.exists(full_path):
+        raise HTTPException(status_code=404, detail="Cover letter file not found on disk")
+    return FileResponse(full_path, media_type="application/pdf", filename=os.path.basename(full_path))
+
+@router.get("/{application_id}/resume")
+async def download_application_resume(application_id: str, db: AsyncSession = Depends(get_db)):
+    u_id = parse_uuid(application_id)
+    result = await db.execute(select(Application).where(Application.id == u_id))
+    app = result.scalar_one_or_none()
+    if not app:
+        raise HTTPException(status_code=404, detail="Application not found")
+    
+    resume_path = None
+    if app.resume_id:
+        res = await db.execute(select(Resume).where(Resume.id == app.resume_id))
+        resume_record = res.scalar_one_or_none()
+        if resume_record:
+            resume_path = resume_record.file_path
+    
+    if not resume_path:
+        res = await db.execute(select(Resume).order_by(desc(Resume.version)).limit(1))
+        resume_record = res.scalar_one_or_none()
+        if resume_record:
+            resume_path = resume_record.file_path
+            
+    if not resume_path:
+        raise HTTPException(status_code=404, detail="Resume not found")
+        
+    full_path = resume_path
+    if not os.path.isabs(full_path):
+        full_path = os.path.join(os.getcwd(), full_path)
+    if not os.path.exists(full_path):
+        raise HTTPException(status_code=404, detail="Resume file not found on disk")
+        
+    return FileResponse(full_path, media_type="application/pdf", filename=os.path.basename(full_path))
+
+
