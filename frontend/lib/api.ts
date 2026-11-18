@@ -152,3 +152,120 @@ export interface SubmissionReceipt {
 
 export const getSubmissionReceipts = () =>
   api.get<SubmissionReceipt[]>("/applications/receipts").then(r => r.data);
+
+// ==========================================
+// RELEASE 2 TYPES & APIS
+// ==========================================
+
+export interface ApprovalItem {
+  id: string;
+  application_id: string;
+  status: "pending" | "approved" | "rejected" | "changes_requested" | "saved_for_later" | "submitted";
+  payload_hash: string;
+  is_valid: boolean;
+  job: {
+    id: string;
+    title: string;
+    company: string;
+    location: string;
+    portal_url: string;
+    score: number;
+  };
+  applicant: {
+    name: string;
+    email: string;
+    phone: string;
+  };
+  answers: Record<string, string>;
+  resume_url: string | null;
+  cover_letter_url: string | null;
+  created_at: string;
+  reviewed_at?: string | null;
+  reviewer_notes?: string | null;
+}
+
+export const getApprovals = (status?: string) =>
+  api.get<ApprovalItem[]>("/approvals/", { params: status ? { status } : {} }).then(r => r.data);
+
+export const getApprovalDetail = (id: string) =>
+  api.get<ApprovalItem>(`/approvals/${id}`).then(r => r.data);
+
+export const submitApprovalDecision = (id: string, decision: "approve" | "reject" | "request_changes" | "save_for_later", reviewerNotes?: string) =>
+  api.post(`/approvals/${id}/decision`, { decision, reviewer_notes: reviewerNotes }).then(r => r.data);
+
+export const executeApprovedSubmission = (id: string) =>
+  api.post<{ status: string; application_id: string; message: string; browser_session_id?: string; screenshot_url?: string }>(`/approvals/${id}/submit`).then(r => r.data);
+
+export interface ObservabilityMetrics {
+  total_traces: number;
+  total_tokens: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  estimated_cost_usd: number;
+  avg_latency_ms: number;
+  by_agent: Record<string, { count: number; tokens: number; cost_usd: number }>;
+  by_model: Record<string, { count: number; tokens: number; cost_usd: number }>;
+}
+
+export interface AgentTraceItem {
+  id: string;
+  agent_name: string;
+  workflow_run_id: string | null;
+  model_provider: string;
+  model_name: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  cost_usd: number;
+  latency_ms: number;
+  status: string;
+  created_at: string;
+}
+
+export const getObservabilityMetrics = () =>
+  api.get<ObservabilityMetrics>("/observability/metrics").then(r => r.data);
+
+export const getAgentTraces = (limit: number = 50, agentName?: string) =>
+  api.get<AgentTraceItem[]>("/observability/traces", { params: { limit, ...(agentName ? { agent_name: agentName } : {}) } }).then(r => r.data);
+
+export interface GmailRecruitmentMessage {
+  id: string;
+  message_id: string;
+  sender: string;
+  recipient: string;
+  subject: string;
+  snippet: string;
+  received_at: string;
+  classification: "interview" | "assessment" | "acknowledgement" | "rejection" | "other";
+  confidence_score: number;
+  company_domain: string | null;
+  deadline: string | null;
+  action_required: boolean;
+  suggested_action: string | null;
+  application_id: string | null;
+}
+
+export const getGmailMessages = (classification?: string, limit: number = 50) =>
+  api.get<GmailRecruitmentMessage[]>("/gmail/messages", { params: { limit, ...(classification ? { classification } : {}) } }).then(r => r.data);
+
+export const syncGmailMessages = () =>
+  api.post<{ status: string; processed_count: number; matched_count: number }>("/gmail/sync").then(r => r.data);
+
+export interface BrowserSessionItem {
+  id: string;
+  workflow_run_id: string | null;
+  application_id: string | null;
+  portal_url: string;
+  ats_type: string;
+  is_headful: boolean;
+  field_mappings: Record<string, string>;
+  pre_submit_screenshot: string | null;
+  post_submit_screenshot: string | null;
+  anti_bot_detected: boolean;
+  success: boolean;
+  error_message: string | null;
+  created_at: string;
+}
+
+export const getBrowserSessions = (limit: number = 25) =>
+  api.get<BrowserSessionItem[]>("/browser/sessions", { params: { limit } }).then(r => r.data);

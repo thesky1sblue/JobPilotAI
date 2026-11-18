@@ -4,19 +4,38 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Search, Target, FileText, Briefcase, Building2,
-  Settings, Bell, ChevronRight, Zap
+  Settings, Bell, ChevronRight, Zap, ShieldCheck, Activity, Mail, Globe
 } from "lucide-react";
 
-const navItems = [
-  { href: "/", icon: LayoutDashboard, label: "Overview" },
-  { href: "/discovery", icon: Search, label: "Job Discovery" },
-  { href: "/matches", icon: Target, label: "Match Intelligence" },
-  { href: "/queue", icon: Briefcase, label: "Application Queue" },
-  { href: "/resume", icon: FileText, label: "Resume Studio" },
-  { href: "/tracker", icon: ChevronRight, label: "Tracker" },
-  { href: "/companies", icon: Building2, label: "Companies" },
-  { href: "/notifications", icon: Bell, label: "Notifications" },
-  { href: "/settings", icon: Settings, label: "Settings" },
+const navSections = [
+  {
+    title: "CORE PLATFORM",
+    items: [
+      { href: "/", icon: LayoutDashboard, label: "Overview" },
+      { href: "/discovery", icon: Search, label: "Job Discovery" },
+      { href: "/matches", icon: Target, label: "Match Intelligence" },
+      { href: "/queue", icon: Briefcase, label: "Application Queue" },
+      { href: "/resume", icon: FileText, label: "Resume Studio" },
+      { href: "/tracker", icon: ChevronRight, label: "Tracker" },
+    ],
+  },
+  {
+    title: "RELEASE 2 AGENTIC",
+    items: [
+      { href: "/approvals", icon: ShieldCheck, label: "Approval Center" },
+      { href: "/operations", icon: Activity, label: "Agent Operations" },
+      { href: "/emails", icon: Mail, label: "Email Intelligence" },
+      { href: "/browser-sessions", icon: Globe, label: "Browser Automation" },
+    ],
+  },
+  {
+    title: "SYSTEM",
+    items: [
+      { href: "/companies", icon: Building2, label: "Companies" },
+      { href: "/notifications", icon: Bell, label: "Notifications" },
+      { href: "/settings", icon: Settings, label: "Settings" },
+    ],
+  },
 ];
 
 export function Sidebar() {
@@ -30,28 +49,35 @@ export function Sidebar() {
         </div>
         <div className="text-[10px] text-text-muted mt-0.5 font-mono">RECRUITMENT INTELLIGENCE</div>
       </div>
-      <nav className="flex-1 py-2">
-        {navItems.map(({ href, icon: Icon, label }) => {
-          const active = pathname === href;
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                "flex items-center gap-2.5 px-4 py-2 text-xs font-medium transition-colors",
-                active
-                  ? "text-accent bg-accent/10 border-r-2 border-accent"
-                  : "text-text-muted hover:text-text hover:bg-surface-2"
-              )}
-            >
-              <Icon size={14} />
-              {label}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 py-2 overflow-y-auto">
+        {navSections.map((section) => (
+          <div key={section.title} className="mb-4">
+            <div className="px-4 py-1 text-[9px] font-bold tracking-wider text-text-muted/60 font-mono">
+              {section.title}
+            </div>
+            {section.items.map(({ href, icon: Icon, label }) => {
+              const active = pathname === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    "flex items-center gap-2.5 px-4 py-1.5 text-xs font-medium transition-colors",
+                    active
+                      ? "text-accent bg-accent/10 border-r-2 border-accent font-semibold"
+                      : "text-text-muted hover:text-text hover:bg-surface-2"
+                  )}
+                >
+                  <Icon size={14} />
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </nav>
       <div className="p-4 border-t border-border">
-        <div className="text-[10px] text-text-muted font-mono">v1.0.0 · LOCAL</div>
+        <div className="text-[10px] text-text-muted font-mono">v2.0.0 · AGENTIC</div>
       </div>
     </aside>
   );
