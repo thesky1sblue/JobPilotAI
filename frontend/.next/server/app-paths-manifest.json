@@ -1,0 +1,11 @@
+{
+  "/operations/page": "app/operations/page.js",
+  "/emails/page": "app/emails/page.js",
+  "/approvals/page": "app/approvals/page.js",
+  "/browser-sessions/page": "app/browser-sessions/page.js",
+  "/tracker/page": "app/tracker/page.js",
+  "/companies/page": "app/companies/page.js",
+  "/page": "app/page.js",
+  "/resume/page": "app/resume/page.js",
+  "/discovery/page": "app/discovery/page.js"
+}
